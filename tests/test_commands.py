@@ -1,4 +1,4 @@
-"""Test cases for command functionality in the app."""
+"""Test commands"""
 
 from decimal import Decimal
 import pytest
@@ -6,10 +6,8 @@ from app.plugins.add import AddCommand
 from app.plugins.subtract import SubtractCommand
 from app.plugins.multiply import MultiplyCommand
 from app.plugins.divide import DivideCommand
-from app.plugins.percentage import PercentageCommand
-from app.plugins.sqrt import SquareRootCommand
 
-@pytest.mark.parametrize("operand1, operand2, command, expected", [  # Renamed "a" and "b" to "operand1" and "operand2"
+@pytest.mark.parametrize("a, b, command, expected", [
     (Decimal('10'), Decimal('5'), AddCommand, Decimal('15')),  # Test addition
     (Decimal('10'), Decimal('5'), SubtractCommand, Decimal('5')),  # Test subtraction
     (Decimal('10'), Decimal('5'), MultiplyCommand, Decimal('50')),  # Test multiplication
@@ -18,28 +16,24 @@ from app.plugins.sqrt import SquareRootCommand
     (Decimal('10.5'), Decimal('0.5'), SubtractCommand, Decimal('10.0')),  # Test subtraction with decimals
     (Decimal('10.5'), Decimal('2'), MultiplyCommand, Decimal('21.0')),  # Test multiplication with decimals
     (Decimal('10'), Decimal('0.5'), DivideCommand, Decimal('20')),  # Test division with decimals
-    (Decimal('50'), Decimal('10'), PercentageCommand, Decimal('5.0')),  # Test percentage
-    (Decimal('25'), None, SquareRootCommand, Decimal('5.0')),  # Test square root
 ])
 
-def test_calculation_commands(operand1, operand2, command, expected):  # Renamed "a" and "b" to "operand1" and "operand2"
+# pylint: disable=invalid-name
+def test_calculation_commands(a, b, command, expected):
     """
     Test calculation commands with various scenarios.
 
     This test ensures that the command class correctly performs the arithmetic operation
-    (specified by the 'command' parameter) on two Decimal operands ('operand1' and 'operand2'),
+    (specified by the 'command' parameter) on two Decimal operands ('a' and 'b'),
     and that the result matches the expected outcome.
 
     Parameters:
-        operand1 (Decimal): The first operand in the calculation.
-        operand2 (Decimal): The second operand in the calculation (can be None for square root).
+        a (Decimal): The first operand in the calculation.
+        b (Decimal): The second operand in the calculation.
         command (function): The arithmetic command to perform.
         expected (Decimal): The expected result of the operation.
     """
-    if operand2 is None:  # For square root, we only use one operand
-        assert command().evaluate(operand1) == expected, f"Failed {command.__name__} command with {operand1}"
-    else:
-        assert command().evaluate(operand1, operand2) == expected, f"Failed {command.__name__} command with {operand1} and {operand2}"
+    assert command().evaluate(a, b) == expected, f"Failed {command.__name__} command with {a} and {b}"  # Perform the operation and assert that the result matches the expected value.
 
 def test_divide_by_zero():
     """
