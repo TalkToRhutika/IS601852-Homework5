@@ -1,55 +1,49 @@
-'''Tests for commands'''
-from app.plugins.add import AddCommand  # Import AddCommand
-from app.plugins.multiply import MultiplyCommand  # Import MultiplyCommand
-from app.plugins.divide import DivideCommand  # Import DivideCommand
+"""Test cases for command functionality in the app."""
 
-def test_add_command(capfd):
-    """Test the add command to ensure it correctly adds two numbers."""
-    command = AddCommand()
-    command.execute('2', '3')  # Directly pass the arguments to execute
-    # out, _ = capfd.readouterr()  # Capture the output
-    # assert out == "The result of 2 + 3 is 5\n", "AddCommand should output the correct result."
+from decimal import Decimal
+import pytest
+from app.plugins.add import AddCommand
+from app.plugins.subtract import SubtractCommand
+from app.plugins.multiply import MultiplyCommand
+from app.plugins.divide import DivideCommand
+from app.plugins.percentage import PercentageCommand
+from app.plugins.sqrt import SquareRootCommand
 
-def test_add_command_invalid_input(capfd):
-    """Test the add command with invalid input."""
-    command = AddCommand()
-    command.execute('two', 'three')  # Passing non-numeric values
-    out, _ = capfd.readouterr()  # Capture the output
-    
-    assert "Invalid input: Please provide valid numbers." in out, "AddCommand should handle invalid input."
+@pytest.mark.parametrize("operand1, operand2, command, expected", [  # Renamed "a" and "b" to "operand1" and "operand2"
+    (Decimal('10'), Decimal('5'), AddCommand, Decimal('15')),  # Test addition
+    (Decimal('10'), Decimal('5'), SubtractCommand, Decimal('5')),  # Test subtraction
+    (Decimal('10'), Decimal('5'), MultiplyCommand, Decimal('50')),  # Test multiplication
+    (Decimal('10'), Decimal('2'), DivideCommand, Decimal('5')),  # Test division
+    (Decimal('10.5'), Decimal('0.5'), AddCommand, Decimal('11.0')),  # Test addition with decimals
+    (Decimal('10.5'), Decimal('0.5'), SubtractCommand, Decimal('10.0')),  # Test subtraction with decimals
+    (Decimal('10.5'), Decimal('2'), MultiplyCommand, Decimal('21.0')),  # Test multiplication with decimals
+    (Decimal('10'), Decimal('0.5'), DivideCommand, Decimal('20')),  # Test division with decimals
+    (Decimal('50'), Decimal('10'), PercentageCommand, Decimal('5.0')),  # Test percentage
+    (Decimal('25'), None, SquareRootCommand, Decimal('5.0')),  # Test square root
+])
 
-def test_add_command_insufficient_arguments(capfd):
-    """Test the add command with insufficient arguments."""
-    command = AddCommand()
-    command.execute('2')  # Only one argument
-    out, _ = capfd.readouterr()  # Capture the output
-    assert out == "Error: 'add' command requires exactly 2 arguments.\n", "AddCommand should notify about insufficient arguments."
+def test_calculation_commands(operand1, operand2, command, expected):  # Renamed "a" and "b" to "operand1" and "operand2"
+    """
+    Test calculation commands with various scenarios.
 
-def test_add_command_too_many_arguments(capfd):
-    """Test the add command with too many arguments."""
-    command = AddCommand()
-    command.execute('1', '2', '3')  # Three arguments
-    out, _ = capfd.readouterr()  # Capture the output
-    assert out == "Error: 'add' command requires exactly 2 arguments.\n", "AddCommand should notify about too many arguments."
+    This test ensures that the command class correctly performs the arithmetic operation
+    (specified by the 'command' parameter) on two Decimal operands ('operand1' and 'operand2'),
+    and that the result matches the expected outcome.
 
-# Existing tests for multiply and divide commands
-def test_multiply_command(capfd):
-    """Test the multiply command to ensure it correctly multiplies two numbers."""
-    command = MultiplyCommand()
-    command.execute('2', '3')  # Directly pass the arguments to execute
-    out, _ = capfd.readouterr()  # Capture the output
-    assert out == "The result of 2 * 3 is 6\n", "MultiplyCommand should output the correct result."
+    Parameters:
+        operand1 (Decimal): The first operand in the calculation.
+        operand2 (Decimal): The second operand in the calculation (can be None for square root).
+        command (function): The arithmetic command to perform.
+        expected (Decimal): The expected result of the operation.
+    """
+    if operand2 is None:  # For square root, we only use one operand
+        assert command().evaluate(operand1) == expected, f"Failed {command.__name__} command with {operand1}"
+    else:
+        assert command().evaluate(operand1, operand2) == expected, f"Failed {command.__name__} command with {operand1} and {operand2}"
 
-def test_divide_command(capfd):
-    """Test the divide command to ensure it correctly divides two numbers."""
-    command = DivideCommand()
-    command.execute('6', '3')  # Directly pass the arguments to execute
-    out, _ = capfd.readouterr()  # Capture the output
-    assert out == "The result of 6 / 3 is 2.0\n", "DivideCommand should output the correct result."
-
-def test_divide_by_zero(capfd):
-    """Test the divide command to ensure it handles division by zero."""
-    command = DivideCommand()
-    command.execute('6', '0')  # Directly pass the arguments to execute
-    out, _ = capfd.readouterr()  # Capture the output
-    assert out == "Error: Division by zero.\n", "DivideCommand should output an error for division by zero."
+def test_divide_by_zero():
+    """
+    Test division by zero to ensure it raises a ZeroDivisionError
+    """
+    with pytest.raises(ZeroDivisionError, match="Cannot divide by 0!"):  # Expect a ZeroDivisionError to be raised.
+        DivideCommand().evaluate(Decimal(3), Decimal(0))  # Attempt to perform the calculation, which should trigger the ZeroDivisionError.
